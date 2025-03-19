@@ -1,4 +1,4 @@
-name: Auto Assign on /assign me
+name: Auto Assign and Unassign on /assign or /unassign
 
 permissions:
   issues: write
@@ -8,17 +8,19 @@ on:
     types: [created]
 
 jobs:
-  assign:
+  manage-assignment:
     runs-on: ubuntu-latest
     steps:
-      - name: Check comment and assign if '/assign me'
+      - name: Process assignment comment only if command is used
+        if: startsWith(github.event.comment.body, '/assign') || startsWith(github.event.comment.body, '/unassign')
         uses: actions/github-script@v6
         with:
           script: |
             const commentBody = context.payload.comment.body.trim();
-            if (commentBody === '/assign me') {
-              const issueNumber = context.payload.issue.number;
-              const username = context.payload.comment.user.login;
+            const issueNumber = context.payload.issue.number;
+            const username = context.payload.comment.user.login;
+
+            if (commentBody === '/assign') {
               await github.rest.issues.addAssignees({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -26,6 +28,14 @@ jobs:
                 assignees: [username]
               });
               console.log(`Assigned ${username} to issue #${issueNumber}`);
+            } else if (commentBody === '/unassign') {
+              await github.rest.issues.removeAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                assignees: [username]
+              });
+              console.log(`Unassigned ${username} from issue #${issueNumber}`);
             } else {
-              console.log("Comment does not match '/assign me'");
+              console.log("Comment does not exactly match '/assign' or '/unassign'");
             }
