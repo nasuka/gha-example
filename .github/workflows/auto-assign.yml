@@ -1,0 +1,28 @@
+name: Auto Assign on /assign me
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check comment and assign if '/assign me'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commentBody = context.payload.comment.body.trim();
+            if (commentBody === '/assign me') {
+              const issueNumber = context.payload.issue.number;
+              const username = context.payload.comment.user.login;
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                assignees: [username]
+              });
+              console.log(`Assigned ${username} to issue #${issueNumber}`);
+            } else {
+              console.log("Comment does not match '/assign me'");
+            }
