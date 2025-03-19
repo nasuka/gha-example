@@ -1,5 +1,8 @@
 name: Auto Assign on /assign me
 
+permissions:
+  issues: write
+
 on:
   issue_comment:
     types: [created]
